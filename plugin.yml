@@ -1,0 +1,7 @@
+name: OmniProtection
+main: net.omniblock.protection.ProtectionPlugin
+author: Omniblock Developers Team
+softdepend: [OmniNetwork, WorldEdit, WorldGuard, OmniRegions]
+version: 1.0.2
+description: Plugin general de la modalidad Survival para el manejo de piedras de protección.
+website: www.omniblock.net
