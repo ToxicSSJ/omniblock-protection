@@ -13,6 +13,7 @@ import net.omniblock.network.library.utils.TextUtil;
 public class LineRegex {
 	
 	public static final String CREATE_PROTECTION_SHOP_UP = "[protection]";
+	public static final String CREATE_PROTECTION_TILE_UP = "[proteger]";
 	
 	public static final String PROTECTION_PREFIX_SHOP_UP = TextUtil.format("&b&lPROTECCIÓN");
 	public static final String PROTECTION_PREFIX_TILE_UP = TextUtil.format("&lPROTEGIDO");

@@ -1,9 +1,11 @@
 package net.omniblock.protection.api.object;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
@@ -18,7 +20,7 @@ public class ProtectedTile {
 	protected String protectorID;
 	
 	protected Sign protectionSign;
-	protected List<Block> protectionStructure;
+	protected List<Block> protectionStructure = new ArrayList<Block>();
 	
 	protected BlockState tileEntity;
 	protected TileType tileType;
@@ -44,10 +46,83 @@ public class ProtectedTile {
 		if(loadType != tileType)
 			this.tileType = loadType;
 			
+		protectionStructure.add(tileEntity.getBlock());
+		
+		Location tileLoc = tileEntity.getLocation();
+		
 		switch(tileType) {
+		
+			case TRAPPED_CHEST: {
+				
+				tileLoc.add(-1, 0, 0);
+				if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.TRAPPED_CHEST){
+					
+					protectionStructure.add(tileLoc.getBlock());
+					break;
+					
+				}
+				
+				tileLoc.add(2, 0, 0);
+				if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.TRAPPED_CHEST){
+					
+					protectionStructure.add(tileLoc.getBlock());
+					break;
+					
+				}
+				
+				tileLoc.add(-1, 0, -1);
+				if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.TRAPPED_CHEST){
+					
+					protectionStructure.add(tileLoc.getBlock());
+					break;
+					
+				}
+				
+				tileLoc.add(0, 0, 2);
+				if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.TRAPPED_CHEST){
+					
+					protectionStructure.add(tileLoc.getBlock());
+					break;
+					
+				}
+				
+				break;
+				
+			}
 		
 			case CHEST: {
 				
+				tileLoc.add(-1, 0, 0);
+				if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.CHEST){
+					
+					protectionStructure.add(tileLoc.getBlock());
+					break;
+					
+				}
+				
+				tileLoc.add(2, 0, 0);
+				if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.CHEST){
+					
+					protectionStructure.add(tileLoc.getBlock());
+					break;
+					
+				}
+				
+				tileLoc.add(-1, 0, -1);
+				if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.CHEST){
+					
+					protectionStructure.add(tileLoc.getBlock());
+					break;
+					
+				}
+				
+				tileLoc.add(0, 0, 2);
+				if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.CHEST){
+					
+					protectionStructure.add(tileLoc.getBlock());
+					break;
+					
+				}
 				
 				break;
 				
@@ -55,12 +130,72 @@ public class ProtectedTile {
 				
 			case DOOR: {
 				
+				tileLoc.add(0, 1, 0);
+					if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.DOOR){
+						
+						protectionStructure.add(tileLoc.getBlock());
+						Location baseLoc = tileLoc.add(0, -2, 0);
+						protectionStructure.add(baseLoc.getBlock());
+						break;
+				
+					}
+				
+				tileLoc.add(0, -2, 0);
+				if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.DOOR){
+					
+					protectionStructure.add(tileLoc.getBlock());
+					Location baseLoc = tileLoc.add(0, -1, 0);
+					protectionStructure.add(baseLoc.getBlock());
+					break;
+				
+				}
+					
+				break;
+			}
+			
+			case DOOR_BLOCK: {
+				
+				for(int i = 0; i < 3; i++){
+					tileLoc.add(0, -1, 0);
+					protectionStructure.add(tileLoc.getBlock());
+				}
 				
 				break;
-				
 			}
 				
 			case DOUBLE_CHEST: {
+				
+				tileLoc.add(-1, 0, 0);
+				if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.CHEST){
+					
+					protectionStructure.add(tileLoc.getBlock());
+					break;
+					
+				}
+				
+				tileLoc.add(2, 0, 0);
+				if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.CHEST){
+					
+					protectionStructure.add(tileLoc.getBlock());
+					break;
+					
+				}
+				
+				tileLoc.add(-1, 0, -1);
+				if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.CHEST){
+					
+					protectionStructure.add(tileLoc.getBlock());
+					break;
+					
+				}
+				
+				tileLoc.add(0, 0, 2);
+				if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.CHEST){
+					
+					protectionStructure.add(tileLoc.getBlock());
+					break;
+					
+				}
 				
 				break;
 				
@@ -80,7 +215,16 @@ public class ProtectedTile {
 			
 		}
 		
+		saveSign();
+	}
+	
+	public void destroy(){
 		
+		protectionStructure = new ArrayList<Block>();
+		ConfigType.PROTECTION_DATA.getConfig().set("protectedsigns." + uniqueID, null);
+		ConfigType.PROTECTION_DATA.getConfigObject().save();
+		
+		return;
 	}
 	
 	public void saveSign() {
@@ -99,9 +243,13 @@ public class ProtectedTile {
 			
 			put("protectionsigns." + uniqueID + ".protectorID", protectorID);
 			put("protectionsigns." + uniqueID + ".location", LocationUtils.serializeLocation(protectionSign.getLocation()));
-			put("protectionsigns." + uniqueID + ".type", tileType);
+			put("protectionsigns." + uniqueID + ".type", tileType.name());
 			
 		}};
+	}
+	
+	public String getUniqueID(){
+		return uniqueID;
 	}
 	
 	public BlockState getTileEntity() {
@@ -112,4 +260,11 @@ public class ProtectedTile {
 		return protectionSign;
 	}
 	
+	public String getProtectorID() {
+		return protectorID;
+	}
+	
+	public List<Block> getStructure(){
+		return protectionStructure;
+	}
 }

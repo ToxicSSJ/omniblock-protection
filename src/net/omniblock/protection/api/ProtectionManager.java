@@ -9,13 +9,17 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
+import org.bukkit.block.Hopper;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPistonExtendEvent;
+import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.inventory.ClickType;
@@ -139,7 +143,11 @@ public class ProtectionManager {
 									String protectorNetworkID = ConfigType.PROTECTION_DATA.getConfig().getString("protectionsigns." + uniqueID + ".protectorID");
 									TileType tileType = TileType.valueOf(ConfigType.PROTECTION_DATA.getConfig().getString("protectionsigns." + uniqueID + ".type"));
 									
-									BlockState tileEntity = TileUtils.getTileBehindSign(sign);
+									org.bukkit.material.Sign signMaterial = (org.bukkit.material.Sign) sign.getData();
+									BlockFace attachedFace = signMaterial.getAttachedFace();
+								
+									BlockState tileEntity= sign.getBlock().getRelative(attachedFace).getState();
+								
 									
 									if(tileEntity == null) {
 										
@@ -557,12 +565,142 @@ public class ProtectionManager {
 							
 						}
 			
+			if(e.getBlock().getType() == Material.HOPPER) {
+				
+				Hopper hopper = (Hopper) e.getBlock().getState();
+				
+				Block block = 
+						TileType.getTileType(e.getBlock().getRelative(BlockFace.UP).getState()) == null ?
+								TileUtils.getBlockByHopper(hopper) :
+								e.getBlock().getRelative(BlockFace.UP);
+				
+				//
+				// Iterar todas las tiendas para buscar
+				// si el cofre que es relativo al hopper
+				// pertenece a alguna de ellas.
+				//
+				if(block != null)
+					for(ProtectedTile protectedTile : registeredTiles) {
+					
+						if(protectedTile.getStructure().contains(block)){
+							
+							if(!Resolver.getLastNameByNetworkID(protectedTile.getProtectorID()).equals(e.getPlayer().getName())) {
+								
+								//
+								// En caso de que el usuario no sea el dueño
+								// de la tienda cancelar el evento y enviarle
+								// un mensaje.
+								//
+								
+								e.getPlayer().sendMessage(TextUtil.format("&lPROTECCIÓN &b&l» &cNo puedes colocar tolvas en protecciones que no sean tuyas!"));
+								e.setBuild(false);
+								e.setCancelled(true);
+								return;
+								
+							} else return;
+						}
+							
+					
+					}
+				
+			}
+			
+			if(e.getBlock().getType() == Material.CHEST || e.getBlock().getType() == Material.TRAPPED_CHEST){
+				
+				Material material = e.getBlock().getType() == Material.CHEST ?
+						Material.CHEST : Material.TRAPPED_CHEST;
+				
+				//Saber si el cofre que puse complementa uno doble
+				
+				Block checkChest = null;
+				Location checkBlock =  e.getBlock().getLocation().add(-1, 0, 0);
+				
+				if(checkBlock.getBlock().getType().equals(material))
+					checkChest = checkBlock.getBlock();
+
+				checkBlock =  checkBlock.add(2, 0, 0);
+				if(checkBlock.getBlock().getType().equals(material))
+					checkChest = checkBlock.getBlock();
+
+				checkBlock =  checkBlock.add(-1, 0, -1);
+				if(checkBlock.getBlock().getType().equals(material))
+					checkChest = checkBlock.getBlock();
+
+				checkBlock =  checkBlock.add(0, 0, 2);
+				if(checkBlock.getBlock().getType().equals(material))
+					checkChest = checkBlock.getBlock();
+				
+				if(checkChest == null) return;
+				
+				
+				//Si el cofre que complemento estaba protegido
+				
+				for(ProtectedTile protectedTile : registeredTiles)
+					if(protectedTile.getStructure().contains(checkChest))
+						if(!Resolver.getLastNameByNetworkID(protectedTile.getProtectorID()).equals(e.getPlayer().getName())){
+							
+							e.getPlayer().sendMessage(TextUtil.format("&lPROTECCIÓN &b&l» &cNo puedes colocar este cofre aquí."));
+							e.setCancelled(true);
+							return;
+						
+						}else{
+
+							protectedTile.load();
+							
+							return;
+						}
+				
+			}
+			
 			return;
 			
 		}
 		
 		@EventHandler
 		public void onDestroy(BlockBreakEvent e) {
+			
+			//
+			//POR CADA PROTECTEDTILE REGISTRADA
+			//
+			for(ProtectedTile protectedTile : registeredTiles){
+				
+				//SI EL BLOQUE QUE ROMPE ESTÁ PROTEGIDO
+				if(protectedTile.getStructure().contains(e.getBlock())){
+						e.getPlayer().sendMessage(TextUtil.format("&lPROTECCIÓN &b&l» &7Este bloque está protegido."));
+						e.setCancelled(true);
+						return;
+					}
+					
+				//AL ROMPER UN CARTEL DE PROTECCION
+				
+				if(e.getBlock().equals(protectedTile.getProtectionSign().getBlock())){
+
+					//si es admin o tiene permisos
+					if(e.getPlayer().isOp() || e.getPlayer().hasPermission("protection.tile.adminbreak")){
+							
+						registeredTiles.remove(protectedTile);
+						protectedTile.destroy();
+						e.getPlayer().sendMessage(TextUtil.format("&lPROTECCIÓN &b&l» &7Has forzado la destrucción de la protección &c'" + protectedTile.getUniqueID() + "'&7 de &8" + Resolver.getLastNameByNetworkID(protectedTile.getProtectorID()) + "&7 correctamente!"));
+						return;
+						
+					}
+						
+					//si si es su proteccion
+					if(Resolver.getLastNameByNetworkID(protectedTile.getProtectorID()).equals(e.getPlayer().getName())){
+						
+						registeredTiles.remove(protectedTile);
+						protectedTile.destroy();
+						e.getPlayer().sendMessage(TextUtil.format("&lPROTECCIÓN &b&l» &7¡Has destruido tu proteccion!"));
+						return;		
+					}
+						
+					e.getPlayer().sendMessage(TextUtil.format("&lPROTECCIÓN &b&l» &7Ahh no hermano consiguete la tuya!"));
+					e.setCancelled(true);
+					return;
+				}
+			}
+			
+			
 			
 			for(ProtectionZoneType type : ProtectionZoneType.values())
 				if(type.getProtectionItem().getType().isBlock())
@@ -588,6 +726,7 @@ public class ProtectionManager {
 									
 							}
 			
+			
 			return;
 			
 		}
@@ -607,6 +746,23 @@ public class ProtectionManager {
 						e.getAction() == Action.LEFT_CLICK_BLOCK ||
 						e.getAction() == Action.PHYSICAL)
 					return;
+				
+				//
+				//Para si cliqueo un TileEntity protegido
+				//Lo puse arriba para que no interfiera con la blacklist
+				//
+				if(TileType.getTileType(e.getClickedBlock().getState()) != null){
+					for(ProtectedTile protectedTile : registeredTiles)
+						if(protectedTile.getStructure().contains(e.getClickedBlock()))
+							if(!(e.getPlayer().isOp() 
+									|| Resolver.getLastNameByNetworkID(protectedTile.getProtectorID()).equals(e.getPlayer().getName()))){
+								
+								e.setCancelled(true);
+								e.getPlayer().sendMessage(TextUtil.format("&lPROTECCIÓN &b&l» &cNo puedes interactuar con esto."));
+								return;
+								
+							}
+				}
 				
 				//
 				// La blacklist es un sistema
@@ -659,8 +815,7 @@ public class ProtectionManager {
 								continue;
 								
 							}
-								
-										
+				
 				
 				//
 				// Para detectar unicamente el click
@@ -670,13 +825,20 @@ public class ProtectionManager {
 					
 					Sign sign = (Sign) e.getClickedBlock().getState();
 					
+					if(sign.getLine(0).equals(LineRegex.PROTECTION_PREFIX_TILE_UP)){
+						
+						//Añadir abrir gui para añadir miembros
+						
+						return;
+					}
+					
 					//
 					// Para detectar si el cartel mantiene
 					// el formato de un cartel de compra de
 					// protecciones.
 					//
-					if(!(sign.getLines().length >= 4))
-						return;
+					if(!(sign.getLines().length >= 4)) //Gracias toxic por pensar en mi codigo y no privatizarlo con un if
+						return;							// que me da flojera cambiar así que escribiré arriba c: xD
 					
 					//
 					// Iterar todas las protecciones disponibles
@@ -728,6 +890,56 @@ public class ProtectionManager {
 		@EventHandler
 		public void onCreate(SignChangeEvent e) {
 			
+			
+			if(e.getLine(0).equalsIgnoreCase(LineRegex.CREATE_PROTECTION_TILE_UP)){
+				
+				Sign protectionSign = (Sign) e.getBlock().getState();
+				
+					org.bukkit.material.Sign signMaterial = (org.bukkit.material.Sign) protectionSign.getData();
+					BlockFace attachedFace = signMaterial.getAttachedFace();
+				
+				BlockState tileEntity= protectionSign.getBlock().getRelative(attachedFace).getState();
+				
+				for(ProtectedTile protectedTile : registeredTiles){
+					
+					if(protectedTile.getStructure().contains(tileEntity.getBlock())){
+						
+						e.getPlayer().sendMessage(TextUtil.format("&lPROTECCIÓN &b&l» &7No puedes proteger algo que ya esta protegido :)."));
+						
+						e.setCancelled(true);
+						e.getBlock().breakNaturally();
+						return;
+						
+					}
+				}
+				
+				TileType tileType = TileType.getTileType(tileEntity);
+				if(tileType == null){
+					e.getPlayer().sendMessage(TextUtil.format("&lPROTECCIÓN &b&l» &7Debes colocar el cartel sobre algo que se pueda proteger!"));
+					e.setCancelled(true);
+					e.getBlock().breakNaturally();
+					return;
+				}
+
+				String uniqueID = UUID.randomUUID().toString().substring(0, 10);
+				String protectorID = Resolver.getNetworkIDByName(e.getPlayer().getName());
+				
+				ProtectedTile tile = new ProtectedTile(
+						uniqueID,
+						protectorID,
+						protectionSign,
+						tileType,
+						tileEntity);
+				
+				tile.load();
+				registeredTiles.add(tile);
+				e.setLine(0, LineRegex.PROTECTION_PREFIX_TILE_UP);
+				e.setLine(2, TextUtil.format("&c&l"+e.getPlayer().getName()));
+				e.getPlayer().sendMessage(TextUtil.format("&lPROTECCIÓN &b&l» &7Protegido correctamente!"));
+				return;
+			}
+			
+					
 			if(e.getLines().length < 2)
 				return;
 			
@@ -772,6 +984,43 @@ public class ProtectionManager {
 				
 			}
 			
+		}
+		
+		
+		@EventHandler
+		public void onPistonExtend(BlockPistonExtendEvent e){
+			
+			//
+			//Revisar cada bloque modificado por el piston
+			//
+			for(Block block : e.getBlocks()){
+				for(ProtectedTile protectedTile : registeredTiles)
+					if(protectedTile.getStructure().contains(block)){
+						e.setCancelled(true);
+						return;
+					}
+			}
+				
+			
+			
+			return;
+		}
+		
+		
+		@EventHandler
+		public void onPistonRetract(BlockPistonRetractEvent e){
+			
+			//
+			//Revisar cada bloque modificado por el piston
+			//
+			for(Block block : e.getBlocks())
+				for(ProtectedTile protectedTile : registeredTiles)
+					if(protectedTile.getStructure().contains(block)){
+						e.setCancelled(true);
+						return;
+					}
+			
+			return;
 		}
 		
 	}

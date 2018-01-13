@@ -1,5 +1,7 @@
 package net.omniblock.protection.api.type;
 
+import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
 import org.bukkit.block.DoubleChest;
@@ -9,14 +11,19 @@ import org.bukkit.block.Furnace;
 public enum TileType {
 
 	CHEST,
-	DOUBLE_CHEST,
 	DOOR,
-	FURNACE,
+	DOOR_BLOCK,
+	DOUBLE_CHEST,
 	ENCHANTING_TABLE,
+	FURNACE,
+	TRAPPED_CHEST,
 	
 	;
 	
 	public static TileType getTileType(BlockState state) {
+		
+		if(state.getBlock().getType().equals(Material.TRAPPED_CHEST))
+			return TRAPPED_CHEST;
 		
 		if(state instanceof Chest)
 			return CHEST;
@@ -24,14 +31,20 @@ public enum TileType {
 		if(state instanceof DoubleChest)
 			return DOUBLE_CHEST;
 		
-		if(state.getBlock().getType().name().contains("DOOR"))
-			return DOOR;
-		
 		if(state instanceof Furnace)
 			return FURNACE;
 		
 		if(state instanceof EnchantingTable)
 			return ENCHANTING_TABLE;
+		
+		if(state.getBlock().getType().name().contains("DOOR"))
+			return DOOR;
+		
+		Location detectDoor = state.getBlock().getLocation();
+		detectDoor.add(0, -1, 0);
+		if(detectDoor.getBlock().getType().name().contains("DOOR")){
+			return DOOR_BLOCK;
+		}
 		
 		return null;
 		
