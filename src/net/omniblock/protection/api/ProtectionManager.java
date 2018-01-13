@@ -637,16 +637,14 @@ public class ProtectionManager {
 				
 				for(ProtectedTile protectedTile : registeredTiles)
 					if(protectedTile.getStructure().contains(checkChest))
-						if(!Resolver.getLastNameByNetworkID(protectedTile.getProtectorID()).equals(e.getPlayer().getName())){
+						if(!(Resolver.getLastNameByNetworkID(protectedTile.getProtectorID()).equals(e.getPlayer().getName()) || e.getPlayer().isOp())){
 							
 							e.getPlayer().sendMessage(TextUtil.format("&lPROTECCIÓN &b&l» &cNo puedes colocar este cofre aquí."));
 							e.setCancelled(true);
 							return;
 						
 						}else{
-
 							protectedTile.load();
-							
 							return;
 						}
 				

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
@@ -54,75 +55,11 @@ public class ProtectedTile {
 		
 			case TRAPPED_CHEST: {
 				
-				tileLoc.add(-1, 0, 0);
-				if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.TRAPPED_CHEST){
-					
-					protectionStructure.add(tileLoc.getBlock());
-					break;
-					
-				}
-				
-				tileLoc.add(2, 0, 0);
-				if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.TRAPPED_CHEST){
-					
-					protectionStructure.add(tileLoc.getBlock());
-					break;
-					
-				}
-				
-				tileLoc.add(-1, 0, -1);
-				if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.TRAPPED_CHEST){
-					
-					protectionStructure.add(tileLoc.getBlock());
-					break;
-					
-				}
-				
-				tileLoc.add(0, 0, 2);
-				if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.TRAPPED_CHEST){
-					
-					protectionStructure.add(tileLoc.getBlock());
-					break;
-					
-				}
-				
 				break;
 				
 			}
 		
 			case CHEST: {
-				
-				tileLoc.add(-1, 0, 0);
-				if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.CHEST){
-					
-					protectionStructure.add(tileLoc.getBlock());
-					break;
-					
-				}
-				
-				tileLoc.add(2, 0, 0);
-				if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.CHEST){
-					
-					protectionStructure.add(tileLoc.getBlock());
-					break;
-					
-				}
-				
-				tileLoc.add(-1, 0, -1);
-				if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.CHEST){
-					
-					protectionStructure.add(tileLoc.getBlock());
-					break;
-					
-				}
-				
-				tileLoc.add(0, 0, 2);
-				if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.CHEST){
-					
-					protectionStructure.add(tileLoc.getBlock());
-					break;
-					
-				}
 				
 				break;
 				
@@ -164,9 +101,8 @@ public class ProtectedTile {
 			}
 				
 			case DOUBLE_CHEST: {
-				
 				tileLoc.add(-1, 0, 0);
-				if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.CHEST){
+				if(tileLoc.getBlock().getType() == Material.CHEST){
 					
 					protectionStructure.add(tileLoc.getBlock());
 					break;
@@ -174,7 +110,7 @@ public class ProtectedTile {
 				}
 				
 				tileLoc.add(2, 0, 0);
-				if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.CHEST){
+				if(tileLoc.getBlock().getType() == Material.CHEST){
 					
 					protectionStructure.add(tileLoc.getBlock());
 					break;
@@ -182,7 +118,7 @@ public class ProtectedTile {
 				}
 				
 				tileLoc.add(-1, 0, -1);
-				if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.CHEST){
+				if(tileLoc.getBlock().getType() == Material.CHEST){
 					
 					protectionStructure.add(tileLoc.getBlock());
 					break;
@@ -190,7 +126,44 @@ public class ProtectedTile {
 				}
 				
 				tileLoc.add(0, 0, 2);
-				if(TileType.getTileType(tileLoc.getBlock().getState()) == TileType.CHEST){
+				if(tileLoc.getBlock().getType() == Material.CHEST){
+					
+					protectionStructure.add(tileLoc.getBlock());
+					break;
+					
+				}
+				
+				break;
+				
+			}
+			
+			case DOUBLE_TRAPPED_CHEST: {
+				tileLoc.add(-1, 0, 0);
+				if(tileLoc.getBlock().getType() == Material.TRAPPED_CHEST){
+					
+					protectionStructure.add(tileLoc.getBlock());
+					break;
+					
+				}
+				
+				tileLoc.add(2, 0, 0);
+				if(tileLoc.getBlock().getType() == Material.TRAPPED_CHEST){
+					
+					protectionStructure.add(tileLoc.getBlock());
+					break;
+					
+				}
+				
+				tileLoc.add(-1, 0, -1);
+				if(tileLoc.getBlock().getType() == Material.TRAPPED_CHEST){
+					
+					protectionStructure.add(tileLoc.getBlock());
+					break;
+					
+				}
+				
+				tileLoc.add(0, 0, 2);
+				if(tileLoc.getBlock().getType() == Material.TRAPPED_CHEST){
 					
 					protectionStructure.add(tileLoc.getBlock());
 					break;
@@ -266,5 +239,11 @@ public class ProtectedTile {
 	
 	public List<Block> getStructure(){
 		return protectionStructure;
+	}
+	public void setTileType(TileType type){
+		
+		this.tileType = type;
+		
+		return;
 	}
 }
